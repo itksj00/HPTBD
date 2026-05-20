@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harry Potter Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dark: #8b6914;
+    --parchment: #f4e8c1;
+    --parchment-dark: #e8d49a;
+    --ink: #1a0e05;
+    --ink-light: #3d2b1f;
+    --crimson: #7b1c1c;
+    --crimson-light: #a83232;
+    --dark-bg: #0d0805;
+    --dark-mid: #1a1008;
+    --dark-panel: #120c06;
+    --magic-blue: #4a90d9;
+    --magic-purple: #8b5cf6;
+    --magic-green: #10b981;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark-bg);
+    font-family: 'Crimson Text', Georgia, serif;
+    color: var(--parchment);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── STAR FIELD ── */
+  #stars-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; }
+
+  /* ══════════════════════════════════
+     WELCOME SCREEN
+  ══════════════════════════════════ */
+  #screen-welcome {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .crest {
+    font-size: 80px;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.6));
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .welcome-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(28px, 5.5vw, 52px);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.8), 0 0 60px rgba(201,168,76,0.4);
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+  }
+
+  .welcome-subtitle {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(18px, 2.8vw, 24px);
+    color: var(--gold-light);
+    margin-bottom: 48px;
+    opacity: 0.85;
+  }
+
+  .scroll-box {
+    background: linear-gradient(160deg, rgba(26,14,5,0.95) 0%, rgba(18,10,4,0.98) 100%);
+    border: 1px solid var(--gold-dark);
+    border-radius: 4px;
+    padding: 48px 56px;
+    max-width: 620px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 0 40px rgba(201,168,76,0.15), inset 0 0 60px rgba(0,0,0,0.5);
+  }
+  .scroll-box::before, .scroll-box::after {
+    content: '';
+    position: absolute;
+    left: 12px; right: 12px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .scroll-box::before { top: 12px; }
+  .scroll-box::after { bottom: 12px; }
+
+  .corner-ornament {
+    position: absolute;
+    font-size: 22px;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+  .corner-ornament.tl { top: 6px; left: 8px; }
+  .corner-ornament.tr { top: 6px; right: 8px; transform: scaleX(-1); }
+  .corner-ornament.bl { bottom: 6px; left: 8px; transform: scaleY(-1); }
+  .corner-ornament.br { bottom: 6px; right: 8px; transform: scale(-1); }
+
+  .welcome-text {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: clamp(20px, 2.6vw, 25px);
+    line-height: 2.1;
+    color: var(--parchment);
+    text-align: center;
+  }
+  .welcome-text .highlight {
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-magic {
+    margin-top: 40px;
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    letter-spacing: 3px;
+    color: var(--dark-bg);
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    border: none;
+    padding: 14px 48px;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+    text-transform: uppercase;
+  }
+  .btn-magic::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -60%;
+    width: 40%; height: 200%;
+    background: rgba(255,255,255,0.25);
+    transform: skewX(-20deg);
+    transition: left 0.5s;
+  }
+  .btn-magic:hover::before { left: 120%; }
+  .btn-magic:hover {
+    box-shadow: 0 6px 30px rgba(201,168,76,0.7);
+    transform: translateY(-2px);
+  }
+  .btn-magic:active { transform: translateY(0); }
+
+  /* ══════════════════════════════════
+     INSTRUCTION SCREEN
+  ══════════════════════════════════ */
+  #screen-instruction {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .instruction-box {
+    background: linear-gradient(160deg, rgba(26,14,5,0.95), rgba(18,10,4,0.98));
+    border: 1px solid var(--gold-dark);
+    padding: 48px;
+    max-width: 560px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 0 40px rgba(201,168,76,0.12);
+  }
+
+  .instruction-text {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: clamp(20px, 2.6vw, 25px);
+    line-height: 2;
+    color: var(--parchment);
+    margin-bottom: 8px;
+  }
+
+  /* ── PAGE TURN ANIMATION ── */
+  #page-turn-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    pointer-events: none;
+  }
+  #page-turn-overlay.active { display: block; }
+
+  .page-turn-container {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(500px, 90vw);
+    height: min(350px, 60vh);
+    perspective: 1200px;
+  }
+
+  .book-page {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    top: 0;
+    background: var(--parchment);
+    border: 1px solid var(--gold-dark);
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .book-page.left { left: 0; border-radius: 4px 0 0 4px; }
+  .book-page.right {
+    left: 50%;
+    border-radius: 0 4px 4px 0;
+    animation: pageTurn 1.4s cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards;
+  }
+  @keyframes pageTurn {
+    0%   { transform: rotateY(0deg); background: var(--parchment); }
+    40%  { background: var(--parchment-dark); }
+    100% { transform: rotateY(-180deg); background: var(--parchment); }
+  }
+  .page-text {
+    font-family: 'Crimson Text', Georgia, serif;
+    color: var(--ink);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+    opacity: 0.6;
+  }
+
+  /* ══════════════════════════════════
+     LOBBY SCREEN
+  ══════════════════════════════════ */
+  #screen-lobby {
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+  }
+
+  .lobby-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(24px, 4vw, 38px);
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(201,168,76,0.5);
+  }
+  .lobby-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--gold-dark);
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 48px;
+    text-transform: uppercase;
+  }
+
+  .chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .chapter-card {
+    position: relative;
+    background: linear-gradient(160deg, rgba(20,12,4,0.97), rgba(12,7,2,0.99));
+    border: 1px solid rgba(139,105,20,0.5);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.4s;
+    overflow: hidden;
+    border-radius: 2px;
+  }
+
+  /* HP-style chapter borders */
+  .chapter-card::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(201,168,76,0.2);
+    pointer-events: none;
+  }
+  .chapter-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent);
+    transition: left 0.6s;
+  }
+  .chapter-card:hover::after { left: 100%; }
+
+  .chapter-card:hover {
+    border-color: rgba(201,168,76,0.8);
+    box-shadow: 0 0 30px rgba(201,168,76,0.2), inset 0 0 30px rgba(201,168,76,0.05);
+    transform: translateY(-3px);
+  }
+
+  /* Completed glow */
+  .chapter-card.completed {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 50px rgba(201,168,76,0.2);
+    animation: completedPulse 2.5s ease-in-out infinite;
+  }
+  @keyframes completedPulse {
+    0%,100% { box-shadow: 0 0 20px rgba(201,168,76,0.4), 0 0 50px rgba(201,168,76,0.15); }
+    50% { box-shadow: 0 0 35px rgba(201,168,76,0.7), 0 0 80px rgba(201,168,76,0.35), 0 0 120px rgba(201,168,76,0.1); }
+  }
+
+  /* Magic sparkles on completed */
+  .chapter-card.completed .magic-sparkles { opacity: 1; }
+  .magic-sparkles {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transition: opacity 0.5s;
+  }
+  .sparkle {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--gold-light);
+    animation: sparkleFloat 3s ease-in-out infinite;
+  }
+  @keyframes sparkleFloat {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    20% { opacity: 1; transform: scale(1); }
+    100% { transform: translateY(-60px) scale(0); opacity: 0; }
+  }
+
+  .chapter-number {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 13px;
+    color: var(--gold-dark);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .chapter-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(18px, 2.4vw, 22px);
+    color: var(--gold-light);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .chapter-meta {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-style: italic;
+    font-size: 15px;
+    color: rgba(201,168,76,0.65);
+  }
+  .chapter-status {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 18px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .chapter-card.completed .chapter-status { opacity: 1; }
+
+  /* ── FINAL DOOR ── */
+  #final-door {
+    display: none;
+    margin-top: 40px;
+    position: relative;
+    cursor: pointer;
+    animation: doorAppear 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  @keyframes doorAppear {
+    0% { transform: scale(0) rotateY(90deg); opacity: 0; }
+    100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  }
+
+  .door-frame {
+    width: 160px;
+    height: 220px;
+    border: 3px solid var(--gold);
+    border-radius: 80px 80px 4px 4px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(74,144,217,0.15), rgba(139,92,246,0.15));
+    box-shadow: 0 0 40px rgba(201,168,76,0.5), 0 0 80px rgba(139,92,246,0.3), inset 0 0 40px rgba(201,168,76,0.1);
+    transition: all 0.3s;
+    overflow: hidden;
+  }
+  #final-door:hover .door-frame {
+    box-shadow: 0 0 60px rgba(201,168,76,0.8), 0 0 120px rgba(139,92,246,0.5);
+    transform: scale(1.05);
+  }
+  .door-knob {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--gold-light), var(--gold-dark));
+    bottom: 30%; right: 20%;
+    box-shadow: 0 0 10px rgba(201,168,76,0.8);
+  }
+  .door-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.3), transparent 70%);
+    animation: doorGlow 2s ease-in-out infinite;
+  }
+  @keyframes doorGlow {
+    0%,100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .door-label {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--gold);
+    text-align: center;
+    margin-top: 12px;
+    letter-spacing: 2px;
+    animation: doorGlow 2s ease-in-out infinite;
+  }
+  .door-stars {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .door-star {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 1.5s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ══════════════════════════════════
+     QUIZ SCREEN
+  ══════════════════════════════════ */
+  #screen-quiz {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .quiz-header {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(22px, 3vw, 30px);
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .quiz-progress-text {
+    font-family: 'Cinzel', serif;
+    font-size: 17px;
+    color: var(--gold-dark);
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+  }
+
+  .quiz-box {
+    background: linear-gradient(160deg, rgba(20,12,4,0.97), rgba(12,7,2,0.99));
+    border: 1px solid var(--gold-dark);
+    padding: 56px 60px;
+    max-width: 700px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 0 40px rgba(201,168,76,0.1);
+  }
+  .quiz-box .corner-ornament { color: var(--gold-dark); opacity: 0.6; }
+
+  .quiz-question-num {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold-dark);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .quiz-question {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: clamp(22px, 3vw, 30px);
+    line-height: 1.85;
+    color: var(--parchment);
+    margin-bottom: 36px;
+  }
+
+  .char-hint {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: rgba(201,168,76,0.75);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .quiz-input-wrap {
+    position: relative;
+  }
+  .quiz-input {
+    width: 100%;
+    background: rgba(244,232,193,0.05);
+    border: 1px solid rgba(139,105,20,0.5);
+    border-radius: 2px;
+    padding: 16px 22px;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 20px;
+    color: var(--parchment);
+    outline: none;
+    transition: all 0.3s;
+    caret-color: var(--gold);
+  }
+  .quiz-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+    background: rgba(244,232,193,0.08);
+  }
+  .quiz-input.correct {
+    border-color: #10b981;
+    box-shadow: 0 0 20px rgba(16,185,129,0.3);
+    color: #6ee7b7;
+  }
+  .quiz-input.wrong {
+    border-color: var(--crimson-light);
+    box-shadow: 0 0 15px rgba(168,50,50,0.3);
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+
+  .quiz-feedback {
+    margin-top: 16px;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-style: italic;
+    font-size: 20px;
+    min-height: 28px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .quiz-feedback.correct { color: #6ee7b7; }
+  .quiz-feedback.wrong { color: #fca5a5; }
+
+  .back-to-lobby {
+    margin-top: 32px;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--gold-dark);
+    background: none;
+    border: 1px solid rgba(139,105,20,0.3);
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+  .back-to-lobby:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* ══════════════════════════════════
+     CHAPTER COMPLETE OVERLAY
+  ══════════════════════════════════ */
+  #chapter-complete-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.85);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  #chapter-complete-overlay.active { display: flex; }
+
+  .chapter-complete-box {
+    text-align: center;
+    animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes scaleIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .chapter-complete-icon {
+    font-size: 64px;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.8));
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+  }
+  .chapter-complete-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(24px, 4.5vw, 40px);
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.8);
+    margin-bottom: 12px;
+  }
+  .chapter-complete-sub {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--parchment);
+    margin-bottom: 32px;
+    opacity: 0.85;
+  }
+
+  /* ══════════════════════════════════
+     FINAL MESSAGE OVERLAY
+  ══════════════════════════════════ */
+  #final-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    background: rgba(0,0,0,0.92);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+  }
+  #final-overlay.active { display: flex; }
+
+  .final-seal {
+    font-size: 60px;
+    filter: drop-shadow(0 0 30px rgba(201,168,76,1));
+    margin-bottom: 32px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .final-message-box {
+    background: linear-gradient(160deg, rgba(26,14,5,0.98), rgba(18,10,4,0.99));
+    border: 2px solid var(--gold);
+    padding: 56px 64px;
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 60px rgba(201,168,76,0.4), 0 0 120px rgba(201,168,76,0.15);
+    animation: scaleIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .final-message-box::before, .final-message-box::after {
+    content: '';
+    position: absolute;
+    left: 16px; right: 16px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .final-message-box::before { top: 16px; }
+  .final-message-box::after { bottom: 16px; }
+
+  .final-message {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: clamp(22px, 3.5vw, 32px);
+    line-height: 1.8;
+    color: var(--gold-light);
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  }
+
+  .final-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .final-submessage {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(20px, 3vw, 28px);
+    color: var(--gold);
+    text-align: center;
+    margin-top: 24px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 20px rgba(201,168,76,0.5);
+  }
+
+  .final-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 599;
+  }
+
+  /* Progress dots */
+  .progress-dots {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .progress-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dark);
+    background: transparent;
+    transition: all 0.4s;
+  }
+  .progress-dot.done {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(201,168,76,0.6);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<!-- ═══════════════ WELCOME ═══════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="crest">⚡</div>
+  <div class="welcome-title">Harry Potter Quiz</div>
+  <div class="welcome-subtitle">The Magical Knowledge Trial</div>
+  <div class="scroll-box">
+    <span class="corner-ornament tl">✦</span>
+    <span class="corner-ornament tr">✦</span>
+    <span class="corner-ornament bl">✦</span>
+    <span class="corner-ornament br">✦</span>
+    <p class="welcome-text">
+      Welcome.<br><br>
+      You will solve <span class="highlight">23 questions</span>.<br>
+      Answer them all correctly and<br>
+      a <span class="highlight">special gift</span> awaits you.
+    </p>
+    <div style="text-align:center">
+      <button class="btn-magic" onclick="showInstruction()">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ INSTRUCTION ═══════════════ -->
+<div id="screen-instruction" class="screen">
+  <div class="instruction-box">
+    <span class="corner-ornament tl">✦</span>
+    <span class="corner-ornament tr">✦</span>
+    <span class="corner-ornament bl">✦</span>
+    <span class="corner-ornament br">✦</span>
+    <p class="instruction-text">
+      All answers are taken directly from the books<br>
+      and must be entered <strong style="color:var(--gold)">exactly</strong> as written.<br><br>
+      Good luck.
+    </p>
+    <div style="text-align:center">
+      <button class="btn-magic" onclick="goDirectToLobby()">Begin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE TURN OVERLAY ═══════════════ -->
+<div id="page-turn-overlay">
+  <div class="page-turn-container">
+    <div class="book-page left">
+      <p class="page-text">Good luck</p>
+    </div>
+    <div class="book-page right" id="right-page">
+      <p class="page-text">∗ ∗ ∗</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ LOBBY ═══════════════ -->
+<div id="screen-lobby" class="screen" style="flex-direction:column;align-items:center">
+  <div class="lobby-title" style="margin-top:40px">Hogwarts Library</div>
+  <div class="lobby-subtitle">Select Your Chapter</div>
+  <div class="chapters-grid" id="chapters-grid"></div>
+  <div id="final-door" onclick="showFinalMessage()">
+    <div class="door-frame">
+      <div class="door-stars" id="door-stars"></div>
+      <div class="door-glow"></div>
+      <div class="door-knob"></div>
+    </div>
+    <div class="door-label">✦ SECRET DOOR ✦</div>
+  </div>
+</div>
+
+<!-- ═══════════════ QUIZ ═══════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header" id="quiz-chapter-title">Chapter I</div>
+  <div class="quiz-progress-text" id="quiz-progress-text">Question 1 of 2</div>
+  <div class="quiz-box">
+    <span class="corner-ornament tl">✦</span>
+    <span class="corner-ornament tr">✦</span>
+    <span class="corner-ornament bl">✦</span>
+    <span class="corner-ornament br">✦</span>
+    <div class="quiz-question-num" id="quiz-question-num">QUESTION 1</div>
+    <div class="quiz-question" id="quiz-question-text"></div>
+    <div class="char-hint" id="char-hint"></div>
+    <div class="progress-dots" id="progress-dots"></div>
+    <div class="quiz-input-wrap" style="margin-top:20px">
+      <input type="text" class="quiz-input" id="quiz-input" placeholder="Type your answer and press Enter..." autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+    <div style="text-align:center">
+      <button class="back-to-lobby" onclick="goToLobby()">← Back to Chapters</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CHAPTER COMPLETE OVERLAY ═══════════════ -->
+<div id="chapter-complete-overlay">
+  <div class="chapter-complete-box">
+    <div class="chapter-complete-icon">🏆</div>
+    <div class="chapter-complete-title" id="chapter-complete-title">Chapter Complete!</div>
+    <div class="chapter-complete-sub" id="chapter-complete-sub">All questions answered!</div>
+    <button class="btn-magic" onclick="closeChapterComplete()">Continue</button>
+  </div>
+</div>
+
+<!-- ═══════════════ FINAL OVERLAY ═══════════════ -->
+<div id="final-overlay">
+  <canvas class="final-particles" id="final-particles"></canvas>
+
+  <!-- Step 1: Congrats -->
+  <div class="final-step" id="final-step-1">
+    <div class="final-seal">⚡</div>
+    <div class="final-message-box">
+      <span class="corner-ornament tl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament tr" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament bl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament br" style="color:var(--gold)">✦</span>
+      <p class="final-message">
+        축하드립니다!<br>
+        모든 문제를 맞추셨어요.
+      </p>
+      <div style="text-align:center;margin-top:36px">
+        <button class="btn-magic" onclick="finalNext(2)">다음</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Send to Kurt -->
+  <div class="final-step" id="final-step-2" style="display:none">
+    <div class="final-seal">✉️</div>
+    <div class="final-message-box">
+      <span class="corner-ornament tl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament tr" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament bl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament br" style="color:var(--gold)">✦</span>
+      <p class="final-message">
+        다음 버튼을 누르면 나타나는<br>
+        메시지를 Kurt에게 보내주세요.
+      </p>
+      <p class="final-submessage">생일 많이 축하합니다 🎉</p>
+      <div style="text-align:center;margin-top:36px">
+        <button class="btn-magic" onclick="finalNext(3)">다음</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: The message -->
+  <div class="final-step" id="final-step-3" style="display:none">
+    <div class="final-seal">⚡</div>
+    <div class="final-message-box">
+      <span class="corner-ornament tl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament tr" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament bl" style="color:var(--gold)">✦</span>
+      <span class="corner-ornament br" style="color:var(--gold)">✦</span>
+      <p class="final-message">
+        레나는 소중한 사람이에요.<br>
+        더 많이 아껴주고,<br>
+        많이 안아줘야합니다.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════
+//  DATA
+// ════════════════════════════════════
+const CHAPTERS = [
+  {
+    number: 'I',
+    title: "The Philosopher's Stone",
+    subtitle: "Book One",
+    emoji: '🪄',
+    quizzes: [
+      { q: "What was the first place Harry visited when he entered Diagon Alley for the first time?", a: "Gringotts Wizarding Bank" },
+      { q: "Who first explains to Harry that he is a wizard?", a: "Hagrid" }
+    ]
+  },
+  {
+    number: 'II',
+    title: "The Chamber of Secrets",
+    subtitle: "Book Two",
+    emoji: '🐍',
+    quizzes: [
+      { q: "Where exactly was the entrance to the Chamber of Secrets located?", a: "Moaning Myrtle's bathroom" },
+      { q: "Who gave Harry the diary that turned out to be a Horcrux?", a: "Lucius Malfoy" }
+    ]
+  },
+  {
+    number: 'III',
+    title: "The Prisoner of Azkaban",
+    subtitle: "Book Three",
+    emoji: '🐾',
+    quizzes: [
+      { q: "What creature does Harry initially fear most in Lupin's Defense Against the Dark Arts class?", a: "Dementor" },
+      { q: "What secret ability did Lupin, Sirius, and Pettigrew all share?", a: "Animagi" }
+    ]
+  },
+  {
+    number: 'IV',
+    title: "The Goblet of Fire",
+    subtitle: "Book Four",
+    emoji: '🔥',
+    quizzes: [
+      { q: "What spell does Harry use to summon his broom during the First Task?", a: "Accio" },
+      { q: "Who gave Harry the Gillyweed he used in the Second Task?", a: "Neville Longbottom" },
+      { q: "What type of dragon did Harry face in the First Task of the Triwizard Tournament?", a: "Hungarian Horntail" },
+      { q: "Whose echo appeared from Voldemort's wand first during the Priori Incantatem connection?", a: "Cedric Diggory" }
+    ]
+  },
+  {
+    number: 'V',
+    title: "The Order of the Phoenix",
+    subtitle: "Book Five",
+    emoji: '🦅',
+    quizzes: [
+      { q: "What was written on the back of Harry's hand after Umbridge's detentions?", a: "I must not tell lies" },
+      { q: "What was the only O.W.L. subject Harry received an Outstanding in?", a: "Defense Against the Dark Arts" },
+      { q: "What organization does Harry secretly form in response to Umbridge's teaching?", a: "Dumbledore's Army" },
+      { q: "In which department of the Ministry of Magic was the prophecy orb kept?", a: "Department of Mysteries" },
+      { q: "What creature did Luna claim existed that most people dismissed?", a: "Nargles" }
+    ]
+  },
+  {
+    number: 'VI',
+    title: "The Half-Blood Prince",
+    subtitle: "Book Six",
+    emoji: '📖',
+    quizzes: [
+      { q: "What did Harry drink in order to obtain Slughorn's true memory?", a: "Felix Felicis" },
+      { q: "What item does Draco Malfoy purchase at Borgin and Burkes that Harry notices?", a: "A cursed necklace" },
+      { q: "What object did Draco repair to allow Death Eaters into Hogwarts?", a: "The Vanishing Cabinet" },
+      { q: "What was the name of the cursed ring that withered Dumbledore's hand?", a: "Marvolo Gaunt's Ring" }
+    ]
+  },
+  {
+    number: 'VII',
+    title: "The Deathly Hallows",
+    subtitle: "Book Seven",
+    emoji: '☠️',
+    quizzes: [
+      { q: "What did Death give to the youngest of the three Peverell brothers?", a: "The Invisibility Cloak" },
+      { q: "Who was the original owner of the Elder Wand before Dumbledore?", a: "Grindelwald" },
+      { q: "Who was Bathilda Bagshot revealed to be when Harry and Hermione met her in Godric's Hollow?", a: "Nagini" },
+      { q: "Where did Harry view Snape's memories?", a: "The Pensieve at Hogwarts" }
+    ]
+  }
+];
+
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+// Load from localStorage
+const STORAGE_KEY = 'hp_quiz_progress_v1';
+let state = {
+  completedChapters: new Set(),
+  currentChapter: 0,
+  currentQuestion: 0,
+  answeredInSession: {}  // chapterIdx -> Set of answered question indices
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      completedChapters: [...state.completedChapters]
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (saved.completedChapters) {
+      state.completedChapters = new Set(saved.completedChapters);
+    }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════
+//  STARS CANVAS
+// ════════════════════════════════════
+(function initStars() {
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createStars() {
+    stars = [];
+    for (let i = 0; i < 200; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5,
+        o: Math.random(),
+        speed: Math.random() * 0.5 + 0.1,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      const opacity = s.o * (0.4 + 0.6 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,220,${opacity})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  createStars();
+  window.addEventListener('resize', () => { resize(); createStars(); });
+  requestAnimationFrame(draw);
+})();
+
+// ════════════════════════════════════
+//  SCREEN TRANSITIONS
+// ════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showInstruction() {
+  showScreen('screen-instruction');
+}
+
+function goDirectToLobby() {
+  buildLobby();
+  showScreen('screen-lobby');
+}
+
+function startPageTurn() {
+  const overlay = document.getElementById('page-turn-overlay');
+  overlay.classList.add('active');
+
+  // Reset animation
+  const rightPage = document.getElementById('right-page');
+  rightPage.style.animation = 'none';
+  rightPage.offsetHeight; // reflow
+  rightPage.style.animation = 'pageTurn 1.4s cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards';
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    buildLobby();
+    showScreen('screen-lobby');
+  }, 1600);
+}
+
+// ════════════════════════════════════
+//  LOBBY
+// ════════════════════════════════════
+function buildLobby() {
+  loadState();
+  const grid = document.getElementById('chapters-grid');
+  grid.innerHTML = '';
+
+  CHAPTERS.forEach((ch, idx) => {
+    const isCompleted = state.completedChapters.has(idx);
+    const card = document.createElement('div');
+    card.className = 'chapter-card' + (isCompleted ? ' completed' : '');
+    card.onclick = () => startChapter(idx);
+
+    // Sparkles for completed
+    let sparkleHTML = '';
+    if (isCompleted) {
+      for (let i = 0; i < 8; i++) {
+        const left = Math.random() * 90 + 5;
+        const delay = Math.random() * 3;
+        const dur = 2 + Math.random() * 2;
+        sparkleHTML += `<div class="sparkle" style="left:${left}%;bottom:${10+Math.random()*30}%;animation-delay:${delay}s;animation-duration:${dur}s"></div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="magic-sparkles">${sparkleHTML}</div>
+      <div class="chapter-status">✨</div>
+      <div class="chapter-number">Chapter ${ch.number}</div>
+      <div class="chapter-title">${ch.emoji} ${ch.title}</div>
+      <div class="chapter-meta">${ch.subtitle}</div>
+      <div class="chapter-meta" style="margin-top:8px;font-size:11px">${ch.quizzes.length} questions</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Check if all chapters complete
+  const allDone = CHAPTERS.every((_, idx) => state.completedChapters.has(idx));
+  const door = document.getElementById('final-door');
+  if (allDone) {
+    door.style.display = 'block';
+    buildDoorStars();
+  } else {
+    door.style.display = 'none';
+  }
+}
+
+function buildDoorStars() {
+  const container = document.getElementById('door-stars');
+  container.innerHTML = '';
+  for (let i = 0; i < 15; i++) {
+    const star = document.createElement('div');
+    star.className = 'door-star';
+    star.style.cssText = `
+      left:${Math.random()*90+5}%;
+      top:${Math.random()*90+5}%;
+      animation-delay:${Math.random()*2}s;
+      animation-duration:${1+Math.random()*1.5}s;
+    `;
+    container.appendChild(star);
+  }
+}
+
+function goToLobby() {
+  buildLobby();
+  showScreen('screen-lobby');
+}
+
+// ════════════════════════════════════
+//  QUIZ
+// ════════════════════════════════════
+function startChapter(chapterIdx) {
+  state.currentChapter = chapterIdx;
+  // Find first unanswered question
+  const answered = state.answeredInSession[chapterIdx] || new Set();
+  state.answeredInSession[chapterIdx] = answered;
+
+  // If already completed, start from beginning for review? 
+  // Actually, if all answered in session OR chapter completed, show from question 0
+  let startQ = 0;
+  const chapter = CHAPTERS[chapterIdx];
+  // Find first unanswered
+  for (let i = 0; i < chapter.quizzes.length; i++) {
+    if (!answered.has(i)) { startQ = i; break; }
+    if (i === chapter.quizzes.length - 1) { startQ = 0; answered.clear(); }
+  }
+  state.currentQuestion = startQ;
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+function renderQuestion() {
+  const ch = CHAPTERS[state.currentChapter];
+  const qIdx = state.currentQuestion;
+  const q = ch.quizzes[qIdx];
+  const answered = state.answeredInSession[state.currentChapter] || new Set();
+
+  document.getElementById('quiz-chapter-title').textContent = `Chapter ${ch.number} — ${ch.title}`;
+  document.getElementById('quiz-progress-text').textContent = `Question ${qIdx + 1} of ${ch.quizzes.length}`;
+  document.getElementById('quiz-question-num').textContent = `QUESTION ${qIdx + 1}`;
+  document.getElementById('quiz-question-text').textContent = q.q;
+  document.getElementById('char-hint').textContent = `${q.a.length} characters (including spaces & punctuation)`;
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+
+  // Progress dots
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = '';
+  ch.quizzes.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (answered.has(i) ? ' done' : '');
+    dots.appendChild(dot);
+  });
+
+  const input = document.getElementById('quiz-input');
+  input.value = '';
+  input.className = 'quiz-input';
+  input.disabled = false;
+  input.focus();
+}
+
+// Input handler
+document.getElementById('quiz-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    checkAnswer();
+  }
+});
+
+function normalizeAnswer(s) {
+  return s.trim().toLowerCase()
+    .replace(/[\u2018\u2019\u02bc\u0060\u0027]/g, '')
+    .replace(/[\u201c\u201d\u0022]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function checkAnswer() {
+  const input = document.getElementById('quiz-input');
+  const feedback = document.getElementById('quiz-feedback');
+  const ch = CHAPTERS[state.currentChapter];
+  const q = ch.quizzes[state.currentQuestion];
+  const userVal = input.value;
+
+  if (!userVal.trim()) return;
+
+  const correct = normalizeAnswer(userVal) === normalizeAnswer(q.a);
+
+  if (correct) {
+    input.className = 'quiz-input correct';
+    feedback.textContent = '✓ Correct!';
+    feedback.className = 'quiz-feedback correct';
+    input.disabled = true;
+
+    const answered = state.answeredInSession[state.currentChapter];
+    answered.add(state.currentQuestion);
+
+    // Update dot
+    const dots = document.getElementById('progress-dots');
+    if (dots.children[state.currentQuestion]) {
+      dots.children[state.currentQuestion].classList.add('done');
+    }
+
+    setTimeout(() => {
+      // Check if chapter complete
+      if (answered.size === ch.quizzes.length) {
+        // Mark complete
+        state.completedChapters.add(state.currentChapter);
+        saveState();
+        showChapterComplete(state.currentChapter);
+      } else {
+        // Next unanswered question
+        for (let i = 0; i < ch.quizzes.length; i++) {
+          if (!answered.has(i)) {
+            state.currentQuestion = i;
+            break;
+          }
+        }
+        renderQuestion();
+      }
+    }, 700);
+  } else {
+    input.className = 'quiz-input wrong';
+    feedback.textContent = '✗ Try again.';
+    feedback.className = 'quiz-feedback wrong';
+    setTimeout(() => {
+      input.className = 'quiz-input';
+      input.value = '';
+      input.focus();
+    }, 600);
+  }
+}
+
+// ════════════════════════════════════
+//  CHAPTER COMPLETE
+// ════════════════════════════════════
+function showChapterComplete(chIdx) {
+  const ch = CHAPTERS[chIdx];
+  document.getElementById('chapter-complete-title').textContent = `Chapter ${ch.number} Complete!`;
+  document.getElementById('chapter-complete-sub').textContent = `${ch.emoji} ${ch.title} — All questions answered!`;
+  document.getElementById('chapter-complete-overlay').classList.add('active');
+}
+
+function closeChapterComplete() {
+  document.getElementById('chapter-complete-overlay').classList.remove('active');
+  buildLobby();
+  showScreen('screen-lobby');
+}
+
+// ════════════════════════════════════
+//  FINAL DOOR
+// ════════════════════════════════════
+function showFinalMessage() {
+  document.getElementById('final-overlay').classList.add('active');
+  startFinalParticles();
+}
+
+function finalNext(step) {
+  document.querySelectorAll('.final-step').forEach(el => el.style.display = 'none');
+  const el = document.getElementById('final-step-' + step);
+  el.style.display = 'flex';
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = 'scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+}
+
+function startFinalParticles() {
+  const canvas = document.getElementById('final-particles');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height + canvas.height,
+      vx: (Math.random() - 0.5) * 2,
+      vy: -(Math.random() * 3 + 1),
+      r: Math.random() * 4 + 1,
+      color: ['#c9a84c','#f0d080','#ffffff','#8b5cf6','#4a90d9'][Math.floor(Math.random()*5)],
+      life: 1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.004;
+      if (p.y < -10 || p.life <= 0) {
+        p.x = Math.random() * canvas.width;
+        p.y = canvas.height + 10;
+        p.life = 1;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life * 0.8;
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    if (document.getElementById('final-overlay').classList.contains('active')) {
+      requestAnimationFrame(draw);
+    }
+  }
+  requestAnimationFrame(draw);
+}
+
+// ════════════════════════════════════
+//  INIT
+// ════════════════════════════════════
+loadState();
+</script>
+</body>
+</html>
